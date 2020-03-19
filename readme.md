@@ -70,6 +70,12 @@ Teach your classifier what `category` the `text` belongs to. The more you teach 
 
 Returns the `category` it thinks `text` belongs to. Its judgement is based on what you have taught it with **.learn()**.
 
+### `classifier.categorizeMultiple(text, count)`
+
+Returns a list of `categories` it thinks `text` belongs to. Its judgement is based on what you have taught it with **.learn()**.
+
+The parameter `count` tells the number of `categories` you want to be retuned (default is 3).
+
 ### `classifier.toJson()`
 
 Returns the JSON representation of a classifier.

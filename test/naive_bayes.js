@@ -117,8 +117,11 @@ describe('bayes .learn() correctness', function () {
     classifier.learn('I dont really know what to make of this.', 'neutral')
 
     //now test it to see that it correctly categorizes a new document
-    assert.equal(classifier.categorize('awesome, cool, amazing!! Yay.'), 'positive')
-    done()
+    classifier.categorize('awesome, cool, amazing!! Yay.')
+      .then((data) => {
+        assert.equal(data, 'positive')
+        done()
+      })
   })
 
   //topic analysis test
@@ -178,3 +181,91 @@ describe('bayes .learn() correctness', function () {
   })
 })
 
+describe('bayes .categorizeMultiple() correctness', function () {
+
+  //sentiment analysis test
+  it('categorizes correctly for `positive` and `negative` categories', function (done) {
+
+    var classifier = bayes()
+
+    //teach it positive phrases
+    classifier.learn('amazing, awesome movie!! Yeah!!', 'positive')
+    classifier.learn('Sweet, this is incredibly, amazing, perfect, great!!', 'positive')
+
+    //teach it a negative phrase
+    classifier.learn('terrible, shitty thing. Damn. Sucks!!', 'negative')
+
+    //teach it a neutral phrase
+    classifier.learn('I dont really know what to make of this.', 'neutral')
+
+    //now test it to see that it correctly categorizes a new document
+    const categories = 
+      classifier
+        .categorizeMultiple('awesome, cool, amazing!! Yay.', 2)
+        .then(data => {
+          //console.log(data);
+          assert.equal(data.length, 2)
+          assert.equal(data[0].category, 'positive')
+          done()      
+        })
+    // assert.equal(categories[0], 'positive')
+    //done()
+  })
+})
+
+describe('bayes options correctness', function () {
+
+  it('correctly behavior with no option specified', function (done) {
+
+    var classifier = bayes()
+
+    classifier.learn('just a word to be learned', 'whatever')
+      .then((data) => {
+        assert.equal(classifier.vocabularySize, 6)
+        done()
+      })
+  })
+
+  it('correctly consider minTokenSize option', function (done) {
+
+    var classifier = bayes({
+      minTokenSize: 2
+    })
+
+    classifier.learn('just a word to be learned', 'whatever')
+      .then((data) => {
+        // The word 'a' will not be considered (its length is less than 2), so vocabulary size must be 5
+        assert.equal(classifier.vocabularySize, 5)
+        done()
+      })
+  })
+
+  it('correctly consider ignoredTokens option', function (done) {
+
+    var classifier = bayes({
+      ignoredTokens: ['a', 'to', 'be']
+    })
+
+    classifier.learn('just a word to be learned', 'whatever')
+      .then((data) => {
+        // The words 'a', 'to', and 'be' will not be considered, so vocabulary size must be 3
+        assert.equal(classifier.vocabularySize, 3)
+        done()
+      })
+  })
+
+  it('correctly consider ignorePattern option', function (done) {
+
+    var classifier = bayes({
+      ignorePattern: /[^A-Za-z ]+/g
+    })
+
+    classifier.learn('just a word to be learned 123 (*)', 'whatever')
+      .then((data) => {
+        // The characters '123', and '(*)' will not be considered, so vocabulary size must be 6
+        assert.equal(classifier.vocabularySize, 6)
+        assert.equal(classifier.vocabulary['123'], undefined)
+        done()
+      })
+  })
+})
